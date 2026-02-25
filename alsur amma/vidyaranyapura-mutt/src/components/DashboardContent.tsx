@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import emailjs from '@emailjs/browser';
 import { useRouter } from 'next/navigation';
 import QrScanner from 'qr-scanner';
 
@@ -54,7 +55,10 @@ export default function DashboardContent() {
   const [showAddVolunteer, setShowAddVolunteer] = useState(false);
   const [newVolunteer, setNewVolunteer] = useState({ name: '', email: '', phone: '' });
 
-  const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
+  useEffect(() => {
+    // Initialize EmailJS with your public key
+    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
+  }, []);
 
   // QR Scanner functions
   const startQRScan = async () => {
@@ -294,21 +298,24 @@ export default function DashboardContent() {
 
   const sendCompletionEmail = async (bookingData: any) => {
     try {
-      const response = await fetch('/.netlify/functions/send-completion-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingData),
-      });
+      const templateParams = {
+        to_email: bookingData.email,
+        devotee_name: bookingData.devoteeName || bookingData.fullName,
+        seva_name: bookingData.sevaName,
+        booking_id: bookingData.id,
+        date: bookingData.date,
+        number_of_people: bookingData.numberOfPeople,
+      };
 
-      if (response.ok) {
-        console.log('Completion email sent successfully');
-      } else {
-        console.error('Failed to send completion email');
-      }
+      await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'YOUR_COMPLETION_TEMPLATE_ID', // Replace with your EmailJS completion template ID
+        templateParams
+      );
+
+      console.log('Completion email sent successfully');
     } catch (error) {
-      console.error('Error sending completion email:', error);
+      console.error('EmailJS completion email error:', error);
     }
   };
 

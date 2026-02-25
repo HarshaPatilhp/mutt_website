@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import emailjs from '@emailjs/browser';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Seva {
@@ -37,6 +38,38 @@ export default function SevaList() {
 
   // Check if current user is admin
   const isAdmin = isAuthenticated && user?.role === 'admin';
+
+  useEffect(() => {
+    // Initialize EmailJS with your public key
+    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
+  }, []);
+
+  const sendBookingEmail = async (bookingData: any) => {
+    try {
+      const templateParams = {
+        to_email: bookingData.email,
+        devotee_name: bookingData.devoteeName,
+        seva_name: bookingData.sevaName,
+        booking_id: bookingData.id,
+        date: bookingData.date,
+        time: bookingData.time,
+        number_of_people: bookingData.numberOfPeople,
+        cost: bookingData.sevaCost,
+        qr_code: bookingData.qrCode,
+      };
+
+      await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        templateParams
+      );
+
+      return true;
+    } catch (error) {
+      console.error('EmailJS error:', error);
+      return false;
+    }
+  };
 
   const sevas: Seva[] = [
     {
@@ -487,15 +520,9 @@ export default function SevaList() {
 
       // Send email with QR code
       try {
-        const emailResponse = await fetch('/.netlify/functions/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ booking: bookingData, qrCode: bookingData.qrCode }),
-        });
+        const emailSent = await sendBookingEmail(bookingData);
 
-        if (emailResponse.ok) {
+        if (emailSent) {
           alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Confirmation email sent successfully.`);
         } else {
           alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Email sending failed, but booking is saved.`);
