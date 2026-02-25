@@ -847,7 +847,7 @@ export default function SevaList() {
               <form 
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleHallBookingSubmit();
+                  handleHallBookingSubmit(e);
                 }} 
                 className="space-y-4"
               >
