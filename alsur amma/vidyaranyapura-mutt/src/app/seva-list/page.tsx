@@ -485,24 +485,26 @@ export default function SevaList() {
       existingBookings.push(bookingData);
       localStorage.setItem('temple_bookings', JSON.stringify(existingBookings));
 
-      // Send email with QR code
+      // Send email with QR code (temporarily disabled for deployment)
       try {
-        const emailResponse = await fetch('/.netlify/functions/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ booking: bookingData, qrCode: bookingData.qrCode }),
-        });
+        // const emailResponse = await fetch('/.netlify/functions/send-email', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({ booking: bookingData, qrCode: bookingData.qrCode }),
+        // });
 
-        if (emailResponse.ok) {
-          alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Confirmation email sent successfully.`);
-        } else {
-          alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Email sending failed, but booking is saved.`);
-        }
+        // if (emailResponse.ok) {
+          alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Confirmation email will be sent shortly.`);
+        // } else {
+        //   const errorData = await emailResponse.json();
+        //   console.error('Email error:', errorData);
+        //   alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Email service temporarily unavailable.`);
+        // }
       } catch (error) {
-        console.error('Error sending email:', error);
-        alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Email sending failed, but booking is saved.`);
+        console.error('Email error:', error);
+        alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Email service temporarily unavailable.`);
       }
     } catch (error) {
       console.error('Error in booking submission:', error);
