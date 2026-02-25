@@ -795,8 +795,8 @@ export default function SevaList() {
                 {lunchRequired && (
                   <div>
                     <label className="block text-sm font-medium text-black mb-1">Lunch Hall Location</label>
-                    <select name="lunchHall" className="w-full px-3 py-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                      <option value=""disabled selected>Select lunch hall location</option>
+                    <select name="lunchHall" defaultValue="" className="w-full px-3 py-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                      <option value="" disabled>Select lunch hall location</option>
                       <option value="Main Prayer Hall">Main Prayer Hall</option>
                       <option value="Abhisheka Hall">Abhisheka Hall</option>
                       <option value="Homa Hall">Homa Hall</option>
