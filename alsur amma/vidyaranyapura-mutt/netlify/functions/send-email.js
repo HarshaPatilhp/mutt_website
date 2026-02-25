@@ -12,168 +12,94 @@ exports.handler = async (event, context) => {
   try {
     const { booking, qrCode } = JSON.parse(event.body);
 
-    // Generate QR Code
-    const qrCodeDataURL = await QRCode.toDataURL(qrCode, {
-      width: 300,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
-      }
-    });
+    // Generate QR code as base64 data URL
+    const qrCodeDataURL = await QRCode.toDataURL(qrCode);
 
-    // Create email transporter
+    // Create transporter
     const transporter = nodemailer.createTransporter({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT),
       secure: false,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_PASS,
       },
-      tls: {
-        rejectUnauthorized: false
-      }
     });
 
-    // Verify transporter
-    await transporter.verify();
-
-    // Email content (simplified version)
+    // Email content
     const emailContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Seva Booking Confirmation</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #ff6b35, #f7931e); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .seva-info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b35; }
-        .qr-code { text-align: center; margin: 20px 0; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; }
-        .blessing { font-style: italic; color: #ff6b35; font-size: 18px; text-align: center; margin: 20px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🙏 श्री विद्यारण्यपुर मठ 🙏</h1>
-            <h2>Vidyaranyapura Mutt</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h1 style="color: #d97706; text-align: center; margin-bottom: 30px;">Sri Raghavendra Swamy Temple</h1>
+          <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Seva Booking Confirmation</h2>
+
+          <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #92400e; margin-top: 0;">Booking Details:</h3>
+            <p><strong>Booking ID:</strong> ${booking.id}</p>
+            <p><strong>Devotee Name:</strong> ${booking.devoteeName}</p>
+            <p><strong>Email:</strong> ${booking.email}</p>
+            <p><strong>Phone:</strong> ${booking.phone}</p>
+            <p><strong>Seva:</strong> ${booking.sevaName}</p>
+            <p><strong>Date:</strong> ${new Date(booking.date).toLocaleDateString()}</p>
+            <p><strong>Time:</strong> ${booking.time}</p>
+            <p><strong>Number of People:</strong> ${booking.numberOfPeople}</p>
+            <p><strong>Gotra:</strong> ${booking.gotra || 'Not specified'}</p>
+            <p><strong>Nakshatra:</strong> ${booking.nakshatra || 'Not specified'}</p>
+            ${booking.hall ? `<p><strong>Hall:</strong> ${booking.hall}</p>` : ''}
+            <p><strong>Tirtha Prasada Required:</strong> ${booking.tirthaPrasadaRequired ? 'Yes' : 'No'}</p>
+            ${booking.tirthaPrasadaRequired ? `<p><strong>Tirtha Prasada Count:</strong> ${booking.tirthaPrasadaCount}</p>` : ''}
+            ${booking.lunchRequired ? `<p><strong>Lunch Required:</strong> Yes</p>` : ''}
+            ${booking.lunchRequired ? `<p><strong>Lunch Count:</strong> ${booking.lunchCount}</p>` : ''}
+            ${booking.lunchHall ? `<p><strong>Lunch Hall:</strong> ${booking.lunchHall}</p>` : ''}
+            ${booking.sevaCost ? `<p><strong>Seva Cost:</strong> ₹${booking.sevaCost}</p>` : ''}
+            ${booking.lunchCost ? `<p><strong>Tirtha Prasada Cost:</strong> ₹${booking.lunchCost}</p>` : ''}
+            ${booking.totalCost ? `<p><strong>Total Cost:</strong> ₹${booking.totalCost}</p>` : ''}
+            ${booking.specialRequests ? `<p><strong>Special Requests:</strong> ${booking.specialRequests}</p>` : ''}
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <h3 style="color: #333; margin-bottom: 10px;">Your QR Code for Check-in:</h3>
+            <img src="${qrCodeDataURL}" alt="Booking QR Code" style="max-width: 200px; height: auto; border: 2px solid #d97706; border-radius: 8px;" />
+            <p style="color: #666; font-size: 14px; margin-top: 10px;">Please show this QR code at the temple entrance for check-in</p>
+          </div>
+
+          <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #065f46; margin-top: 0;">Important Instructions:</h3>
+            <ul style="color: #065f46;">
+              <li>Please arrive 15 minutes before your scheduled time</li>
+              <li>Bring a valid ID proof for verification</li>
+              <li>Show this email and QR code at the temple office</li>
+              <li>Follow all temple guidelines and maintain decorum</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #666; font-size: 14px;">Sri Raghavendra Swamy Temple<br>Vidyaranyapura, Bangalore</p>
+            <p style="color: #666; font-size: 12px; margin-top: 10px;">For any queries, please contact the temple office</p>
+          </div>
         </div>
-
-        <div class="content">
-            <div class="blessing">May Lord Raghavendra bless you with peace and prosperity</div>
-
-            <h3>Booking Confirmation</h3>
-
-            <div class="seva-info">
-                <h4>📋 Booking Details:</h4>
-                <ul>
-                    <li><strong>Seva:</strong> ${booking.sevaName}</li>
-                    <li><strong>Date:</strong> ${new Date(booking.date).toLocaleDateString()}</li>
-                    <li><strong>Time:</strong> ${booking.time}</li>
-                    <li><strong>Number of People:</strong> ${booking.numberOfPeople}</li>
-                    <li><strong>Gotra:</strong> ${booking.gotra}</li>
-                    <li><strong>Nakshatra:</strong> ${booking.nakshatra}</li>
-                    <li><strong>Hall Location:</strong> ${booking.hall}</li>
-                    <li><strong>Cost:</strong> ${booking.sevaCost}</li>
-                    <li><strong>Booking ID:</strong> ${booking.id}</li>
-                </ul>
-            </div>
-
-            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0;">
-                <h4>⏰ Important Instructions:</h4>
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seva Cost:</td>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${booking.sevaCost}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tirtha Prasada Required:</td>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${booking.lunchRequired ? `Yes (${booking.lunchCount} people)` : 'No'}</td>
-                  </tr>
-                  ${booking.lunchRequired ? `
-                  <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tirtha Prasada Cost:</td>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${booking.lunchCost} (${booking.lunchCount} × ₹250)</td>
-                  </tr>
-                  ` : ''}
-                  <tr>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #ea580c; font-size: 16px;">Total Cost:</td>
-                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #ea580c; font-size: 16px;">${booking.totalCost}</td>
-                  </tr>
-                </table>
-                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 10px; border-radius: 3px;">
-                    <strong style="color: #92400e;">💰 Important Information:</strong> Please be at the temple at the mentioned time.
-                </div>
-                <ul>
-                  <li>Arrive at the temple 15 minutes before your scheduled time</li>
-                  <li>Bring this email or show the QR code for verification at the time of Tirtha Prasada</li>
-                  <li>Please maintain silence and sanctity in the temple premises</li>
-                  <li>Please find the QR code attached at the end of this email</li>
-                </ul>
-            </div>
-
-            <div class="qr-code">
-                <h3>📱 Your QR Code</h3>
-                <p>Please show this QR code at the temple entrance for verification.</p>
-                ${qrCodeDataURL ?
-                  `<img src="${qrCodeDataURL}" alt="Booking QR Code" style="max-width: 200px; border: 2px solid #333; border-radius: 5px; display: block; margin: 10px auto;" />` :
-                  `<div style="background: #f0f0f0; padding: 20px; text-align: center; border: 2px dashed #ccc; border-radius: 5px;">
-                    <p style="color: #666; font-size: 14px;">QR Code: ${qrCode}</p>
-                    <p style="color: #999; font-size: 12px;">Please show this code at the temple</p>
-                  </div>`
-                }
-                <p><strong>QR Code:</strong> ${qrCode}</p>
-            </div>
-
-            <p>We look forward to your divine service and spiritual journey.</p>
-
-            <p>With blessings,<br>
-            <strong>Sri Vidyaranyapura Mutt Management</strong></p>
-
-            <div class="footer">
-                <p>📞 Contact: +91-XXXXXXXXXX | 📧 info@vidyaranyapuramutt.org</p>
-                <p>🏛️ Sri Vidyaranyapura Mutt, Bangalore</p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+      </div>
     `;
 
-    // Send email
-    console.log('Attempting to send email to:', booking.email);
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: booking.email,
-      subject: `Seva Booking Confirmation - ${booking.sevaName}`,
-      html: emailContent
+      subject: `Seva Booking Confirmation - ${booking.sevaName} - ID: ${booking.id}`,
+      html: emailContent,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', result.messageId);
+    // Send email
+    await transporter.sendMail(mailOptions);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        message: 'Email sent successfully',
-        messageId: result.messageId
-      }),
+      body: JSON.stringify({ message: 'Email sent successfully' }),
     };
-
   } catch (error) {
     console.error('Error sending email:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: 'Failed to send email',
-        details: error.message
-      }),
+      body: JSON.stringify({ error: 'Failed to send email', details: error.message }),
     };
   }
 };
