@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Seva {
   id: number;
@@ -23,19 +24,19 @@ interface Hall {
 }
 
 export default function SevaList() {
+  const { user, isAuthenticated } = useAuth();
   const [selectedSeva, setSelectedSeva] = useState<Seva | null>(null);
   const [selectedHall, setSelectedHall] = useState<Hall | null>(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showHallBookingForm, setShowHallBookingForm] = useState(false);
-  const [lunchRequired, setLunchRequired] = useState(false);
+  const [tirthaPrasadaRequired, setTirthaPrasadaRequired] = useState(false);
+  const [tirthaPrasadaCount, setTirthaPrasadaCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'seva' | 'hall'>('seva');
 
-  // Initialize EmailJS
-  useState(() => {
-    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
-  });
+  // Check if current user is admin
+  const isAdmin = isAuthenticated && user?.role === 'admin';
 
   const sevas: Seva[] = [
     {
@@ -433,7 +434,7 @@ export default function SevaList() {
   const handleBookSeva = (seva: Seva) => {
     setSelectedSeva(seva);
     setShowBookingForm(true);
-    setLunchRequired(false);
+    setTirthaPrasadaRequired(false);
   };
 
   const handleBookHall = (hall: Hall) => {
@@ -460,10 +461,29 @@ export default function SevaList() {
         gotra: formData.get('gotra') as string,
         nakshatra: formData.get('nakshatra') as string,
         hall: formData.get('hall') as string,
-        cost: selectedSeva?.cost,
+        tirthaPrasadaRequired: formData.get('tirthaPrasadaRequired') === 'yes',
+        tirthaPrasadaCount: parseInt(formData.get('tirthaPrasadaCount') as string) || 0,
+        lunchRequired: formData.get('tirthaPrasadaRequired') === 'yes',
+        lunchCount: parseInt(formData.get('tirthaPrasadaCount') as string) || 0,
+        lunchHall: (formData.get('tirthaPrasadaRequired') === 'yes') ? (formData.get('lunchHall') as string) : '',
+        specialRequests: formData.get('specialRequests') as string,
+        status: 'confirmed' as const,
+        sevaCost: selectedSeva?.cost,
+        lunchCost: (parseInt(formData.get('tirthaPrasadaCount') as string) || 0) * 250,
+        totalCost: (() => {
+          const sevaCostStr = selectedSeva?.cost || '₹0';
+          const sevaCostNum = parseFloat(sevaCostStr.replace('₹', '').replace(',', '')) || 0;
+          const tirthaCostNum = (parseInt(formData.get('tirthaPrasadaCount') as string) || 0) * 250;
+          return sevaCostNum + tirthaCostNum;
+        })(),
         qrCode: `QR${Date.now()}`,
         createdAt: new Date().toISOString()
       };
+
+      // Save to localStorage
+      const existingBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
+      existingBookings.push(bookingData);
+      localStorage.setItem('temple_bookings', JSON.stringify(existingBookings));
 
       // Send email with QR code
       try {
@@ -484,78 +504,18 @@ export default function SevaList() {
         console.error('Error sending email:', error);
         alert(`Booking submitted for ${selectedSeva?.name}! Your booking ID is ${bookingData.id}. Email sending failed, but booking is saved.`);
       }
-
-      // Save to localStorage as backup
-      const existingBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
-      existingBookings.push(bookingData);
-      localStorage.setItem('temple_bookings', JSON.stringify(existingBookings));
-
+    } catch (error) {
+      console.error('Error in booking submission:', error);
+      alert('An error occurred while submitting your booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
       setShowBookingForm(false);
       setSelectedSeva(null);
-    } catch (error) {
-      console.error('Booking submission error:', error);
-      alert('There was an error submitting your booking. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleHallBookingSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const formData = new FormData(e.currentTarget);
-
-      // Prepare email template parameters for hall booking
-      const templateParams = {
-        to_email: formData.get('email'),
-        devotee_name: formData.get('fullName'),
-        hall_name: selectedHall?.name,
-        event_date: formData.get('date'),
-        event_type: formData.get('eventType'),
-        number_of_people: formData.get('numberOfPeople'),
-        event_description: formData.get('eventDescription'),
-        hall_cost: selectedHall?.cost,
-        hall_capacity: selectedHall?.capacity,
-        booking_id: `HB${Date.now()}`,
-        phone: formData.get('phone')
-      };
-
-      // Send confirmation email using EmailJS
-      try {
-        await emailjs.send(
-          'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-          'YOUR_HALL_TEMPLATE_ID', // Replace with your EmailJS hall booking template ID
-
-        if (emailResponse.ok) {
-          alert(`Hall booking submitted for ${selectedHall?.name}! Your booking ID is ${bookingData.id}. Confirmation email sent successfully.`);
-        } else {
-          alert(`Hall booking submitted for ${selectedHall?.name}! Your booking ID is ${bookingData.id}. Email sending failed, but booking is saved.`);
-        }
-      } catch (error) {
-        console.error('Error sending email:', error);
-        alert(`Hall booking submitted for ${selectedHall?.name}! Your booking ID is ${bookingData.id}. Email sending failed, but booking is saved.`);
-      }
-
-      // Save to localStorage as backup
-      const existingBookings = JSON.parse(localStorage.getItem('temple_hall_bookings') || '[]');
-      existingBookings.push(bookingData);
-      localStorage.setItem('temple_hall_bookings', JSON.stringify(existingBookings));
-
-      setShowHallBookingForm(false);
-      setSelectedHall(null);
-    } catch (error) {
-      console.error('Hall booking submission error:', error);
-      alert('There was an error submitting your hall booking. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
       <section className="bg-gradient-to-r from-orange-600 to-orange-800 text-white py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">Seva & Hall Booking</h1>
@@ -619,10 +579,15 @@ export default function SevaList() {
                     <p><strong>Cost:</strong> <span className="text-orange-600 font-bold">{seva.cost}</span></p>
                   </div>
                   <button
-                    onClick={() => handleBookSeva(seva)}
-                    className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors duration-200 touch-target"
+                    onClick={() => isAdmin ? handleBookSeva(seva) : alert('Only administrators can book sevas. Please contact the temple office for booking.')}
+                    className={`w-full py-2 px-4 rounded-md transition-colors duration-200 touch-target ${
+                      isAdmin 
+                        ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    }`}
+                    disabled={!isAdmin}
                   >
-                    Book Seva
+                    {isAdmin ? 'Book Seva' : 'Contact Office to Book'}
                   </button>
                 </div>
               ))}
@@ -647,10 +612,15 @@ export default function SevaList() {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleBookHall(hall)}
-                    className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors duration-200 touch-target"
+                    onClick={() => isAdmin ? handleBookHall(hall) : alert('Only administrators can book halls. Please contact the temple office for booking.')}
+                    className={`w-full py-2 px-4 rounded-md transition-colors duration-200 touch-target ${
+                      isAdmin 
+                        ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    }`}
+                    disabled={!isAdmin}
                   >
-                    Book Hall
+                    {isAdmin ? 'Book Hall' : 'Contact Office to Book'}
                   </button>
                 </div>
               ))}
@@ -796,15 +766,15 @@ export default function SevaList() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">Do you require lunch?</label>
+                  <label className="block text-sm font-medium text-black mb-2">Do you require Tirtha Prasada?</label>
                   <div className="flex gap-6">
                     <label className="flex items-center">
                       <input
                         type="radio"
-                        name="lunchRequired"
+                        name="tirthaPrasadaRequired"
                         value="yes"
-                        checked={lunchRequired === true}
-                        onChange={() => setLunchRequired(true)}
+                        checked={tirthaPrasadaRequired === true}
+                        onChange={() => setTirthaPrasadaRequired(true)}
                         className="mr-2"
                       />
                       <span className="text-black">Yes</span>
@@ -812,10 +782,13 @@ export default function SevaList() {
                     <label className="flex items-center">
                       <input
                         type="radio"
-                        name="lunchRequired"
+                        name="tirthaPrasadaRequired"
                         value="no"
-                        checked={lunchRequired === false}
-                        onChange={() => setLunchRequired(false)}
+                        checked={tirthaPrasadaRequired === false}
+                        onChange={() => {
+                          setTirthaPrasadaRequired(false);
+                          setTirthaPrasadaCount(0);
+                        }}
                         className="mr-2"
                       />
                       <span className="text-black">No</span>
@@ -823,11 +796,33 @@ export default function SevaList() {
                   </div>
                 </div>
 
-                {lunchRequired && (
+                {tirthaPrasadaRequired && (
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">Lunch Hall Location</label>
+                    <label className="block text-sm font-medium text-black mb-1">How many people will have Tirtha Prasada? (₹250 per person)</label>
+                    <input
+                      type="number"
+                      name="tirthaPrasadaCount"
+                      min="1"
+                      max="50"
+                      value={tirthaPrasadaCount}
+                      onChange={(e) => setTirthaPrasadaCount(parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Enter number of people"
+                      required
+                    />
+                    {tirthaPrasadaCount > 0 && (
+                      <p className="text-sm text-orange-600 mt-1">
+                        Tirtha Prasada cost: ₹{tirthaPrasadaCount * 250} ({tirthaPrasadaCount} × ₹250)
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {tirthaPrasadaRequired && (
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-1">Tirtha Prasada Hall Location</label>
                     <select name="lunchHall" defaultValue="" className="w-full px-3 py-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
-                      <option value="" disabled>Select lunch hall location</option>
+                      <option value="" disabled>Select Tirtha Prasada hall location</option>
                       <option value="Main Prayer Hall">Main Prayer Hall</option>
                       <option value="Abhisheka Hall">Abhisheka Hall</option>
                       <option value="Homa Hall">Homa Hall</option>
@@ -838,11 +833,23 @@ export default function SevaList() {
                 )}
 
                 <div className="bg-gray-50 p-4 rounded-md">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-black">Seva Cost:</span>
-                    <span className="text-orange-600 font-bold">{selectedSeva.cost}</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-black">Seva Cost:</span>
+                      <span className="text-orange-600 font-bold">{selectedSeva?.cost || '0'}</span>
+                    </div>
+                    {tirthaPrasadaCount > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-black">Tirtha Prasada Cost ({tirthaPrasadaCount} × ₹250):</span>
+                        <span className="text-orange-600 font-bold">₹{tirthaPrasadaCount * 250}</span>
+                      </div>
+                    )}
+                    <div className="border-t pt-2 flex justify-between items-center">
+                      <span className="font-bold text-black">Total Cost:</span>
+                      <span className="text-orange-600 font-bold text-lg">₹{(parseFloat(selectedSeva?.cost?.replace('₹', '') || '0') || 0) + (tirthaPrasadaCount * 250)}</span>
+                    </div>
                   </div>
-                  <p className="text-sm text-black">Payment will be collected at the temple</p>
+                  <p className="text-sm text-black mt-2">Payment will be collected at the temple</p>
                 </div>
 
                 <button
@@ -876,10 +883,7 @@ export default function SevaList() {
               </div>
 
               <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleHallBookingSubmit(e);
-                }} 
+                onSubmit={handleBookingSubmit} 
                 className="space-y-4"
               >
                 <div>

@@ -12,10 +12,24 @@ export default function Header() {
     <header className="bg-orange-600 text-white shadow-lg">
       <div className="container mx-auto px-4">
         {/* Logo Section */}
-        <div className="flex justify-center py-4">
-          <Link href="/" className="text-2xl md:text-3xl font-bold tracking-wider">
+        <div className="flex justify-center items-center py-4 space-x-4">
+         <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-black">
+            <img 
+              src="images/6.jpg"
+              alt="Mathaji Ulsooramma Raghavendra Swamy Mutt" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <Link href="/" className="text-2xl md:text-5xl font-bold tracking-wider">
             Mathaji Ulsooramma Raghavendra Swamy Mutt
           </Link>
+          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-black">
+            <img 
+              src="images/7.jpeg"
+              alt="Mathaji Ulsooramma Raghavendra Swamy Mutt" 
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         {/* Navigation Section */}

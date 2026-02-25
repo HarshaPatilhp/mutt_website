@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     console.log('QR Code generated successfully');
 
     // Create email transporter with explicit settings
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: false, // Use TLS
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
                     <li><strong>Gotra:</strong> ${booking.gotra}</li>
                     <li><strong>Nakshatra:</strong> ${booking.nakshatra}</li>
                     <li><strong>Hall Location:</strong> ${booking.hall}</li>
-                    <li><strong>Cost:</strong> ${booking.cost}</li>
+                    <li><strong>Cost:</strong> ${booking.sevaCost}</li>
                     <li><strong>Booking ID:</strong> ${booking.id}</li>
                 </ul>
             </div>
@@ -96,11 +96,34 @@ export async function POST(request: NextRequest) {
 
             <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0;">
                 <h4>⏰ Important Instructions:</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seva Cost:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${booking.sevaCost}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tirtha Prasada Required:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${booking.lunchRequired ? `Yes (${booking.lunchCount} people)` : 'No'}</td>
+                  </tr>
+                  ${booking.lunchRequired ? `
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tirtha Prasada Cost:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${booking.lunchCost} (${booking.lunchCount} × ₹250)</td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #ea580c; font-size: 16px;">Total Cost:</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #ea580c; font-size: 16px;">${booking.totalCost}</td>
+                  </tr>
+                </table>
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 10px; border-radius: 3px;">
+                    <strong style="color: #92400e;">💰 Important Information:</strong> Please be at the temple at the mentioned time.
+                </div>
                 <ul>
-                    <li>Arrive at the temple 15 minutes before your scheduled time</li>
-                    <li>Bring this email or show the QR code for verification</li>
-                    <li>Payment will be collected at the temple</li>
-                    <li>Please maintain silence and sanctity in the temple premises</li>
+                  <li>Arrive at the temple 15 minutes before your scheduled time</li>
+                  <li>Bring this email or show the QR code for verification at the time of lunch</li>
+                  <li>Please maintain silence and sanctity in the temple premises</li>
+                  <li>Please find the QR code attached at the end of this email</li>
                 </ul>
             </div>
 
