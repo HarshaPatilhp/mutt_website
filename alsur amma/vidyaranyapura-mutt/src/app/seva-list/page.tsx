@@ -1,7 +1,7 @@
 'use client';
 
 import emailjs from '@emailjs/browser';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Seva {

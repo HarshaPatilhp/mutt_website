@@ -55,10 +55,7 @@ export default function DashboardContent() {
   const [showAddVolunteer, setShowAddVolunteer] = useState(false);
   const [newVolunteer, setNewVolunteer] = useState({ name: '', email: '', phone: '' });
 
-  useEffect(() => {
-    // Initialize EmailJS with your public key
-    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
-  }, []);
+  const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
 
   // QR Scanner functions
   const startQRScan = async () => {
