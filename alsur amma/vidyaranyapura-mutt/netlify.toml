@@ -6,45 +6,26 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Next.js static export configuration
+# Handle Next.js static assets
 [[redirects]]
   from = "/_next/*"
-  to = "/"
+  to = "/_next/:splat"
   status = 200
 
+# Handle API routes to Netlify Functions
 [[redirects]]
-  from = "/_next/static/*"
-  to = "/_next/static/"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
 
+# Handle root redirect
 [[redirects]]
   from = "/index.html"
   to = "/"
   status = 200
 
-# Handle specific page routes
-[[redirects]]
-  from = "/seva-list.html"
-  to = "/seva-list"
-  status = 200
-
-[[redirects]]
-  from = "/dashboard.html"
-  to = "/dashboard"
-  status = 200
-
-[[redirects]]
-  from = "/login.html"
-  to = "/login"
-  status = 200
-
-[[redirects]]
-  from = "/contact.html"
-  to = "/contact"
-  status = 200
-
-# Handle 404s for Next.js static export
+# Handle all other routes to index.html for SPA behavior
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 404
+  status = 200
