@@ -437,9 +437,7 @@ export default function SevaList() {
   };
 
   const handleBookingSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
+    // Don't prevent default - let Formspree handle the submission
     // Add hidden fields for Formspree
     const form = e.target as HTMLFormElement;
     const hiddenField = document.createElement('input');
@@ -454,10 +452,7 @@ export default function SevaList() {
     typeField.value = 'seva_booking';
     form.appendChild(typeField);
 
-    // Formspree will handle the submission
-    form.submit();
-    
-    // Reset form after submission
+    // Formspree will handle the submission and redirect
     setTimeout(() => {
       setShowBookingForm(false);
       setSelectedSeva(null);
@@ -466,9 +461,7 @@ export default function SevaList() {
   };
 
   const handleHallBookingSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
+    // Don't prevent default - let Formspree handle the submission
     // Add hidden fields for Formspree
     const form = e.target as HTMLFormElement;
     const hiddenField = document.createElement('input');
@@ -483,10 +476,7 @@ export default function SevaList() {
     typeField.value = 'hall_booking';
     form.appendChild(typeField);
 
-    // Formspree will handle the submission
-    form.submit();
-    
-    // Reset form after submission
+    // Formspree will handle the submission and redirect
     setTimeout(() => {
       setShowHallBookingForm(false);
       setSelectedHall(null);

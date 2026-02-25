@@ -22,18 +22,18 @@ export default function Contact() {
   };
 
   const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Formspree will handle the form submission
-    const form = e.target as HTMLFormElement;
-    form.submit();
-    // Reset form after submission
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
-    });
+    // Don't prevent default - let Formspree handle the submission
+    // Formspree will redirect to a success page automatically
+    // We can add a small delay to reset form if needed
+    setTimeout(() => {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      });
+    }, 1000);
   };
 
   const handleDonationSubmit = (e: React.FormEvent<HTMLFormElement>) => {
