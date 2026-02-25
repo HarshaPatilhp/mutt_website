@@ -1,12 +1,18 @@
 [build]
   command = "npm run build"
   publish = "out"
-
+  
 [build.environment]
   NODE_VERSION = "18"
+
+# Next.js static export configuration
+[[redirects]]
+  from = "/_next/*"
+  to = "/"
+  status = 200
 
 # Handle 404s for Next.js static export
 [[redirects]]
   from = "/*"
-  to = "/404.html"
+  to = "/index.html"
   status = 404
